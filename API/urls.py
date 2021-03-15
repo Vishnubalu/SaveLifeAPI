@@ -21,5 +21,6 @@ from API import views
 
 urlpatterns = [
     url('login/', views.loginUser),
-    url('signup/', views.signupUser)
+    url('signup/', views.signupUser),
+    url('session/', views.check_session)
 ]

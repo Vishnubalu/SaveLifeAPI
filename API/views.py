@@ -1,11 +1,12 @@
 import datetime
 import json
+from django.contrib.sessions.backends.db import SessionStore
 from django.http import JsonResponse, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework.decorators import api_view
 from rest_framework.utils import json
 from API import serializers
-from API.models import Person
+
 
 
 @api_view(['POST'])
@@ -14,8 +15,10 @@ def loginUser(request):
     try:
         json_data = json.load(request)
         details = json_data["details"]
-        serializer = serializers.personSerializer()
+        serializer = serializers.donorSerializer()
         if serializer.check_credentials(details["email"], details["password"]):
+            request.session["username"] = details["email"]
+            print(request.session.has_key('username'))
             return HttpResponse(json.dumps({"Logged" : True}), content_type='application/json')
         else:
             return HttpResponse(json.dumps({"Logged" : False}), content_type='application/json')
@@ -28,18 +31,33 @@ def loginUser(request):
 @api_view(['POST'])
 @csrf_exempt
 def signupUser(request):
-    try:
-        json_data = json.load(request)
-        details = json_data["details"]
-        serializer = serializers.personSerializer(data=details)
-        if serializer.is_valid() and not serializer.email_exists(details["email"]):
-            serializer.save()
-            return HttpResponse(json.dumps({"signed": True}), content_type='application/json')
-        else:
-            return HttpResponse(json.dumps({"Logged" : False}), content_type='application/json')
 
-    except Exception:
-        serializer = serializers.personSerializer()
-        now = datetime.datetime.now()
-        html = "<html><body>It is now %s.</body></html>" % now
-        return HttpResponse(html)
+    json_data = json.load(request)
+    details = json_data["details"]
+
+    serializer = serializers.donorSerializer(data = details)
+
+    print(serializer.getDonor())
+    print(details)
+    print("before if")
+    print(serializer.get_validators())
+    print(serializer.run_validation(details))
+    if serializer.is_valid():
+        serializer.save()
+        return HttpResponse(json.dumps({"signed": True}), content_type='application/json')
+    else:
+        return HttpResponse(json.dumps({"signed" : False}), content_type='application/json')
+
+
+
+@api_view(['POST'])
+@csrf_exempt
+def check_session(request):
+    s = SessionStore()
+    print(s.create())
+    print(s.session_key)
+    print(request.session.get("username", "vishnu"))
+    return HttpResponse(json.dumps({"username": serializers.sessionSerializer().get_session()}), content_type='application/json')
+
+
+
