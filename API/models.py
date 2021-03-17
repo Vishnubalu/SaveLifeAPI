@@ -1,9 +1,7 @@
-import email
-
 from django.db import models
-from django.db.models.fields.json import JSONField
-# Create your models here.
 
+
+# Create your models here.
 
 class Donor(models.Model):
     user_name = models.CharField(max_length=100)
@@ -32,6 +30,7 @@ class Bloodstore(models.Model):
     def __str__(self):
         return super(Bloodstore, self).__str__()
 
+
 class Bloodbanks(models.Model):
     bank_name = models.CharField(max_length=100)
     email = models.EmailField()
@@ -44,17 +43,3 @@ class Bloodbanks(models.Model):
     plasma_availability = models.BooleanField(default=False)
     timings = models.TextField(default="24/7")
     details = models.TextField()
-
-
-
-
-
-
-
-
-
-
-
-
-
-

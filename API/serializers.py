@@ -1,56 +1,55 @@
-from typing import List
 from django.contrib.sessions.models import Session
 from django.core.serializers import serialize
+from django.db.models import Count
 from rest_framework import serializers
-from django.core.serializers import json
-from API import models
+
 from API.models import Donor, Bloodstore
 
-class personSerializer(serializers.ModelSerializer):
-
-    # class Meta:
-    #     model = Person
-    #     fields: List[str] = ['name', 'email', 'password', 'phoneNum', 'address', 'bloodType', 'NumDonations', 'NumRequests', 'FundDonations']
-    #
-    # def getPersonDetails(self):
-    #     details = Person.objects.all()
-    #     return serialize('json', details)
-    #
-    # def check_credentials(self, user_email, user_password):
-    #     return Person.objects.filter(email=user_email, password=user_password).exists()
-    #
-    # def email_exists(self, user_email):
-    #     return Person.objects.filter(email=user_email).exists()
-    pass
 
 class donorSerializer(serializers.ModelSerializer):
     class Meta:
         model = Donor
         fields = '__all__'
 
-    def getDonor(self):
+    def getDonor(self, user_ids):
         details = Donor.objects.all()
-        return serialize('json', details)
+        donors = details.filter(id__in=user_ids)
+        return donors.values()
 
-    def check_credentials(self, donor_email, donor_pass):
-        return Donor.objects.filter(email=donor_email, password=donor_pass)
+    def check_credentials(self, donor_phone, donor_pass):
+        return Donor.objects.filter(phoneNum=donor_phone, password=donor_pass).exists()
 
-    def donor_exists(self, user_email, user_phone):
-        print("inside ", user_email, user_phone)
-        return Donor.objects.filter(email=user_email) or Donor.objects.filter(phoneNum=user_phone)
+    def donor_exists(self, user_phone):
+        return (not Donor.objects.filter(phoneNum=user_phone).exists())
 
 
 class bloodstoreSerializer(serializers.ModelSerializer):
     class Meta:
         model = Bloodstore
-        fields = ['donor', 'bloodType', 'plasma', 'state', 'district', 'mandal', 'area']
+        fields = '__all__'
 
-class sessionSerializer(serializers.Serializer):
-    def get_session(self):
-        s = Session.objects.all()
-        for session in s:
-            print(session.get_decoded())
+    def getBlood(self, user_ids):
+        blood = Bloodstore.objects.all()
+        return serialize('json', blood)
 
-        return "hehe"
+    def findBlood(self, need_bloodType, need_state, need_district, need_mandal):
+        blood = Bloodstore.objects.all()
+        blood = blood.filter(bloodType=need_bloodType,
+                           state=need_state,
+                           district=need_district,
+                           mandal=need_mandal).values()
+        donors = blood.values_list("donor_id", flat=True)
+        donors = donorSerializer().getDonor(user_ids=donors)
+        donors_list = []
+        for i in range(len(donors)):
+            donors[i].update(blood[i])
+            donors[i].pop("password")
+            donors[i].pop("id")
+            donors[i].pop("donor_id")
+            donors_list.append(donors[i])
+        return donors_list
 
+    def bloodInfo(self):
+        blood_info = Bloodstore.objects.values("bloodType").annotate(Count("bloodType"))
+        return blood_info
 

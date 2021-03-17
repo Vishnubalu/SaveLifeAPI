@@ -22,5 +22,6 @@ from API import views
 urlpatterns = [
     url('login/', views.loginUser),
     url('signup/', views.signupUser),
-    url('session/', views.check_session)
+    url('findBlood/', views.findDonor_and_Blood),
+    url('bloodInfo/', views.getBlood_info)
 ]
