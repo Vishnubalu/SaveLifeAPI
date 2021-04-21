@@ -1,9 +1,8 @@
-from django.contrib.sessions.models import Session
 from django.core.serializers import serialize
 from django.db.models import Count
 from rest_framework import serializers
 
-from API.models import Donor, Bloodstore
+from API.models import Donor, Bloodstore, Bloodbanks
 
 
 class donorSerializer(serializers.ModelSerializer):
@@ -28,16 +27,16 @@ class bloodstoreSerializer(serializers.ModelSerializer):
         model = Bloodstore
         fields = '__all__'
 
-    def getBlood(self, user_ids):
+    def getBlood(self):
         blood = Bloodstore.objects.all()
         return serialize('json', blood)
 
     def findBlood(self, need_bloodType, need_state, need_district, need_mandal):
         blood = Bloodstore.objects.all()
         blood = blood.filter(bloodType=need_bloodType,
-                           state=need_state,
-                           district=need_district,
-                           mandal=need_mandal).values()
+                             state=need_state,
+                             district=need_district,
+                             mandal=need_mandal).values()
         donors = blood.values_list("donor_id", flat=True)
         donors = donorSerializer().getDonor(user_ids=donors)
         donors_list = []
@@ -53,3 +52,25 @@ class bloodstoreSerializer(serializers.ModelSerializer):
         blood_info = Bloodstore.objects.values("bloodType").annotate(Count("bloodType"))
         return blood_info
 
+
+class bloodbankSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Bloodbanks
+        fields = "__all__"
+
+    def get_bloodBank(self, id):
+        banks = Bloodbanks.objects.all()
+        banks = banks.filter(id=id).values()
+        banks_list = []
+        for bank in banks:
+            banks_list.append(bank)
+        return banks_list
+
+    def get_bloodBanks(self, details):
+        banks = Bloodbanks.objects.all()
+        banks = banks.filter(state=details["state"],
+                             district=details["district"]).values()
+        banks_list = []
+        for bank in banks:
+            banks_list.append(bank)
+        return banks_list
