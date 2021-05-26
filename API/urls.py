@@ -23,5 +23,10 @@ urlpatterns = [
     url('findBlood/', views.get_BloodAndDonor_byArea),
     url('bloodInfo/', views.getBlood_info),
     url('addbank/', views.add_bloodbank),
-    url('getbank/', views.get_bloodbank)
+    url('getbank/', views.get_bloodbank),
+    url('addpatient/', views.add_patient),
+    url('getpatients/', views.get_patients),
+    url('verify/', views.verify_otp),
+    url('send_sms/', views.SMS),
+    url('make_request/', views.Make_request)
 ]

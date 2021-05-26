@@ -1,13 +1,13 @@
 import base64
 import datetime
-
+from API.sms import send_sms
 import pyotp
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework.response import Response
 
 from API.models import Donor
 
-EXPIRY_TIME = 50 # seconds
+EXPIRY_TIME = 180 # seconds
 
 class generateKey:
     @staticmethod
@@ -42,6 +42,7 @@ class getPhoneNumberRegistered_TimeBased():
         OTP = pyotp.TOTP(key,interval = EXPIRY_TIME)  # TOTP Model for OTP is created
 
         # Using Multi-Threading send the OTP Using Messaging Services like Twilio or Fast2sms
+        send_sms(OTP.now(), phone)
         return OTP.now()  # Just for demonstration
 
     # This Method verifies the OTP
@@ -61,7 +62,10 @@ class getPhoneNumberRegistered_TimeBased():
         except Exception:
             print(Exception)
         OTP = pyotp.TOTP(key,interval = EXPIRY_TIME)  # TOTP Model
+
         if OTP.verify(otp):  # Verifying the OTP
-            return ("You are authorised")
-        return ("OTP is wrong/expired")
+            Mobile.verified = True
+            Mobile.save()
+            return True
+        return False
 
